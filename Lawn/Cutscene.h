@@ -1,4 +1,4 @@
-#ifndef __CUTSCENE_H__
+ï»¿#ifndef __CUTSCENE_H__
 #define __CUTSCENE_H__
 
 using namespace Sexy;
@@ -25,11 +25,11 @@ public:
     bool                        mPreloaded;                       //+0x34
     bool                        mPlacedZombies;                   //+0x35
     bool                        mPlacedLawnItems;                 //+0x36
-    int                         mCrazyDaveCountDown;              //+0x38 ¡¾ÍÆÏú´÷·òµ¹¼ÆÊ±¡¿
-    int                         mCrazyDaveLastTalkIndex;          //+0x3C ¡¾´÷·òÍÆÏúµÄ»°µÄ±àºÅ¡¿
-    bool                        mUpsellHideBoard;                 //+0x40 ¡¾ÍÆÏúÒş²Ø¹Ø¿¨½çÃæ¡¿
-    ChallengeScreen*            mUpsellChallengeScreen;           //+0x44 ¡¾ÍÆÏú²åÈëµÄĞ¡ÓÎÏ·½çÃæ¡¿
-    bool                        mPreUpdatingBoard;                //+0x48 ¡¾³¡¾°²¼ÖÃ½×¶ÎµÄ¹Ø¿¨Ô¤¸üĞÂ¡¿
+    int                         mCrazyDaveCountDown;              //+0x38 ã€æ¨é”€æˆ´å¤«å€’è®¡æ—¶ã€‘
+    int                         mCrazyDaveLastTalkIndex;          //+0x3C ã€æˆ´å¤«æ¨é”€çš„è¯çš„ç¼–å·ã€‘
+    bool                        mUpsellHideBoard;                 //+0x40 ã€æ¨é”€éšè—å…³å¡ç•Œé¢ã€‘
+    ChallengeScreen*            mUpsellChallengeScreen;           //+0x44 ã€æ¨é”€æ’å…¥çš„å°æ¸¸æˆç•Œé¢ã€‘
+    bool                        mPreUpdatingBoard;                //+0x48 ã€åœºæ™¯å¸ƒç½®é˜¶æ®µçš„å…³å¡é¢„æ›´æ–°ã€‘
 public:
     CutScene();
     ~CutScene();

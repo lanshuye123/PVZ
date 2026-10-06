@@ -1,4 +1,4 @@
-#ifndef __DATASYNC_H__
+﻿#ifndef __DATASYNC_H__
 #define __DATASYNC_H__
 
 #include "../../SexyAppFramework/Common.h"
@@ -51,7 +51,7 @@ public:
 	bool					OpenFile(const std::string& theFileName);
 	void					OpenMemory(unsigned long theReserveAmount = 0x20);
 	void					Close();
-	inline bool				WriteToFile(const std::string& theFileName) { /* δ�ҵ� */ }
+	inline bool				WriteToFile(const std::string& theFileName) { /* 未找到 */ }
 	void					WriteBytes(const void* theData, unsigned long theDataLen);
 	void					WriteLong(unsigned long theLong);
 	void					WriteShort(unsigned short theShort);
@@ -60,10 +60,10 @@ public:
 	void					WriteFloat(float theFloat);
 	void					WriteDouble(double theDouble);
 	void					WriteString(const SexyString& theStr);
-	inline unsigned long	GetPos() { /* δ�ҵ� */ }
-	inline void				SetLong(unsigned long, unsigned long) { /* δ�ҵ� */ }
-	inline void				SetShort(unsigned int, unsigned long) { /* δ�ҵ� */ }
-	inline void				SetByte(unsigned int, unsigned long) { /* δ�ҵ� */ }
+	inline unsigned long	GetPos() { /* 未找到 */ }
+	inline void				SetLong(unsigned long, unsigned long) { /* 未找到 */ }
+	inline void				SetShort(unsigned int, unsigned long) { /* 未找到 */ }
+	inline void				SetByte(unsigned int, unsigned long) { /* 未找到 */ }
 	inline void*			GetDataPtr() { return mData; }
 	inline int				GetDataLen() { return mDataLen; }
 };
@@ -91,7 +91,7 @@ public:
 	DataSync(DataWriter& theWriter);
 	virtual ~DataSync();
 
-	inline void				SyncPointers() { /* δ�ҵ� */ }
+	inline void				SyncPointers() { /* 未找到 */ }
 	inline void				SetReader(DataReader* theReader) { mReader = theReader; }
 	inline void				SetWriter(DataWriter* theWriter) { mWriter = theWriter; }
 	inline DataReader*		GetReader() { return mReader; }
@@ -143,8 +143,8 @@ public:
 	void					SyncFloat(float& theFloat);
 	void					SyncDouble(double& theDouble);
 	void					SyncString(SexyString& theStr);
-	inline void				SyncPointer(void**) { /* δ�ҵ� */ }
-	inline void				RegisterPointer(void*) { /* δ�ҵ� */ }
+	inline void				SyncPointer(void**) { /* 未找到 */ }
+	inline void				RegisterPointer(void*) { /* 未找到 */ }
 	inline void				SetVersion(int theVersion) { mVersion = theVersion; }
 	inline int				GetVersion() const { return mVersion; }
 };

@@ -1,4 +1,4 @@
-#include "../Board.h"
+Ôªø#include "../Board.h"
 #include "../Zombie.h"
 #include "GameButton.h"
 #include "../../LawnApp.h"
@@ -34,7 +34,7 @@ ContinueDialog::ContinueDialog(LawnApp* theApp) : LawnDialog(
     CalcSize(10, 60);
 }
 
-//0x4333D0°¢0x4333F0
+//0x4333D0„ÄÅ0x4333F0
 ContinueDialog::~ContinueDialog()
 {
     delete mContinueButton;

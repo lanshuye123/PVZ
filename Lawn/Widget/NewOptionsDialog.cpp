@@ -1,4 +1,4 @@
-#include "../Board.h"
+Ôªø#include "../Board.h"
 #include "GameButton.h"
 #include "../Cutscene.h"
 #include "AlmanacDialog.h"
@@ -109,7 +109,7 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector) :
     //}
 }
 
-//0x45C760°¢0x45C780
+//0x45C760„ÄÅ0x45C780
 NewOptionsDialog::~NewOptionsDialog()
 {
     delete mMusicVolumeSlider;
