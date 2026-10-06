@@ -10,18 +10,20 @@ bool (*gAppHasUsedCheatKeys)();			//[0x69E6A4]
 SexyString (*gGetCurrentLevelName)();
 
 //0x44E8F0
-#include <shlwapi.h> 
-static std::string GetExeDirectory() {
-	char exePath[MAX_PATH];
-	GetModuleFileNameA(NULL, exePath, MAX_PATH); 
-	PathRemoveFileSpecA(exePath);
-
-	return std::string(exePath);
-}
+// Directory helpers now live in SexyAppFramework/Common.cpp so that the
+// save-data selection can use the same ones (see Sexy::GetExeDirectory).
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
 	gHInstance = hInstance;
+
+	// Remember where the process was launched from: the "instance" mode in
+	// savedata.ini uses it, and Init() changes the working directory later.
+	{
+		char aLaunchDir[MAX_PATH] = { 0 };
+		if (GetCurrentDirectoryA(MAX_PATH, aLaunchDir) != 0)
+			Sexy::SetLaunchDirectory(aLaunchDir);
+	}
 
 #if defined(_SHOW_OUTPUT_CONSOLE)
     AllocConsole();

@@ -196,6 +196,25 @@ SexyString			GetFullPath(const SexyString& theRelPath);
 SexyString			GetPathFrom(const SexyString& theRelPath, const SexyString& theDir);
 bool				AllowAllAccess(const SexyString& theFileName);
 
+// ---------------------------------------------------------------------------
+// Save-data location control
+//
+// The folder the game treats as its "app data" root - saves live in a
+// "userdata" subfolder of it - is chosen at startup from savedata.ini, a static
+// file shipped next to the executable. Modes: portable, instance, user
+// (default), static and legacy. See ResolveSaveDataFolder().
+// ---------------------------------------------------------------------------
+typedef std::map<SexyString, SexyString> IniValueMap;
+
+bool				LoadIniFile(const SexyString& theFileName, IniValueMap* theValues);
+SexyString			GetExeDirectory();
+void				SetLaunchDirectory(const SexyString& theDir);
+SexyString			GetLaunchDirectory();
+SexyString			ResolveSaveDataFolder(const SexyString& theCompanyName,
+										 const SexyString& theProductName,
+										 const SexyString& theCommonAppData,
+										 const SexyString& theRoamingAppData);
+
 void				SMemR(void*& _Src, void* _Dst, size_t _Size);
 void				SMemRStr(void*& _Src, std::string& theString);
 void				SMemW(void*& _Dst, const void* _Src, size_t _Size);

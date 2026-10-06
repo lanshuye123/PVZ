@@ -1,4 +1,4 @@
-﻿//#define SEXY_TRACING_ENABLED
+//#define SEXY_TRACING_ENABLED
 //#define SEXY_PERF_ENABLED
 //#define SEXY_MEMTRACE
 
@@ -6584,23 +6584,38 @@ void SexyAppBase::Init()
 		HMODULE aMod;
 		SHGetFolderPathFunc aFunc = (SHGetFolderPathFunc)GetSHGetFolderPath(_S("shell32.dll"), &aMod);
 		if (aFunc == NULL || aMod == NULL)
-			SHGetFolderPathFunc aFunc = (SHGetFolderPathFunc)GetSHGetFolderPath(_S("shfolder.dll"), &aMod);
+			aFunc = (SHGetFolderPathFunc)GetSHGetFolderPath(_S("shfolder.dll"), &aMod);
 
-		if (aMod != NULL)
+		SexyString aCommonAppData;
+		SexyString aRoamingAppData;
+
+		if (aMod != NULL && aFunc != NULL)
 		{
-			SexyChar aPath[MAX_PATH];
+			// Zero-initialised, so a failed lookup yields an empty string rather
+			// than the uninitialised buffer this block used to read.
+			SexyChar aPath[MAX_PATH] = { 0 };
 			aFunc(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, aPath);
+			aCommonAppData = aPath;
 
-			SexyString aDataPath = RemoveTrailingSlash(aPath) + _S("\\") + mFullCompanyName + _S("\\") + mProdName;
-			SetAppDataFolder(aDataPath + _S("\\"));
-			//MkDir(aDataPath);
-			//AllowAllAccess(aDataPath);
-			if (mDemoFileName.length() < 2 || (mDemoFileName[1] != ':' && mDemoFileName[2] != '\\'))
-			{
-				mDemoFileName = GetAppDataFolder() + mDemoFileName;
-			}
+			SexyChar aRoamingPath[MAX_PATH] = { 0 };
+			aFunc(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, aRoamingPath);
+			aRoamingAppData = aRoamingPath;
 
 			FreeLibrary(aMod);
+		}
+
+		// savedata.ini next to the executable decides where progress is kept;
+		// see ResolveSaveDataFolder() for the available modes.
+		SexyString aDataPath = ResolveSaveDataFolder(mFullCompanyName, mProdName, aCommonAppData, aRoamingAppData);
+		SetAppDataFolder(aDataPath);
+		// Create it up front so the very first save always has somewhere to go,
+		// and so the chosen location is obvious before any progress is made.
+		MkDir(aDataPath);
+		MkDir(aDataPath + _S("userdata"));
+
+		if (mDemoFileName.length() < 2 || (mDemoFileName[1] != ':' && mDemoFileName[2] != '\\'))
+		{
+			mDemoFileName = GetAppDataFolder() + mDemoFileName;
 		}
 	}
 	

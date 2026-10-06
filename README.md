@@ -209,6 +209,49 @@ If it works or you had not have this issue before, Congratulations!! You had suc
 I suggest you join our discord server community to ask questions and help from everyone in the modding community.
 
 
+# Save Data Location
+
+Where the game keeps profiles and progress is chosen by `savedata.ini`, a plain
+text file that sits next to the executable and ships with the build. Its source
+is `assets/savedata.ini`, and the build copies it into the output folder.
+
+Progress is always written to a `userdata` subfolder of the location selected
+here, so the setting only chooses the root.
+
+| `mode` | Save data root | Use it when |
+|---|---|---|
+| `user` *(default)* | `%APPDATA%\PopCap Games\PlantsVsZombies` | Normal desktop install. Per-user data that roams with the Windows profile. |
+| `portable` | The folder containing the executable | Self-contained install: a USB stick, or an archive you unzip and run. |
+| `instance` | The folder the process was launched from | One independent save set per launch directory - several shortcuts with different "Start in" folders, or a launcher that sets the working directory. |
+| `static` | The path given by `path` | You want the saves in an exact place. Absolute, or relative to the executable. |
+| `legacy` | `%PROGRAMDATA%\PopCap Games\PlantsVsZombies` | You need the original shared, machine-wide location. |
+
+Any unknown or missing value falls back to `user`, so deleting the file is safe.
+The selected root and its `userdata` folder are created at startup, which also
+makes it obvious where a given build is writing.
+
+Example - keep saves on a second drive:
+
+```ini
+mode = static
+path = D:\PvZSaves
+```
+
+### Notes
+
+- **If you rebuild, edit `assets/savedata.ini`**, not the copy next to the
+  executable: the build step copies the whole `assets/` folder over the output.
+  For a build you are not going to rebuild, editing the copy next to the
+  executable is fine.
+- **Carrying over existing saves.** Set `mode = legacy` to keep using profiles
+  written by earlier builds, or copy the contents of the old `userdata` folder
+  into the new location.
+- On Windows an executable carries an *integrity label*, and Windows starts it
+  at that integrity level. A low-integrity build cannot write outside folders
+  that are also low-integrity, which shows up as "saves never persist". If you
+  build inside a sandboxed or otherwise confined environment, make sure the
+  resulting executable is not left with a lower label than its save folder.
+
 # Modding Guide
 ### Adding new assets
 You have to create a folder named `extension/` inside the `assets/` folder containing:

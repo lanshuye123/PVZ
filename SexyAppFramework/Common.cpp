@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <aclapi.h>
+#include <fstream>
 
 #include "PerfTimer.h"
 
@@ -134,6 +135,164 @@ void Sexy::SetAppDataFolder(const std::string& thePath)
 
 		Sexy::gAppDataFolder = aPath;
 	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Save-data location control
+///////////////////////////////////////////////////////////////////////////////
+
+// Directory the running executable lives in (no trailing slash).
+SexyString Sexy::GetExeDirectory()
+{
+	char aPath[MAX_PATH] = { 0 };
+	GetModuleFileNameA(NULL, aPath, MAX_PATH);
+
+	std::string aDir(aPath);
+	size_t aPos = aDir.find_last_of("\\/");
+	if (aPos != std::string::npos)
+		aDir.erase(aPos);
+
+	return aDir;
+}
+
+// Directory the process was launched from, captured before the game changes its
+// working directory (see main.cpp). Falls back to the current directory.
+static SexyString gLaunchDirectory;
+
+void Sexy::SetLaunchDirectory(const SexyString& theDir)
+{
+	gLaunchDirectory = theDir;
+}
+
+SexyString Sexy::GetLaunchDirectory()
+{
+	if (!gLaunchDirectory.empty())
+		return gLaunchDirectory;
+
+	return GetCurDir();
+}
+
+// Minimal INI reader: "key = value" lines, '#' or ';' comments, [sections]
+// ignored, optional UTF-8 BOM. Keys are matched case-insensitively.
+bool Sexy::LoadIniFile(const SexyString& theFileName, IniValueMap* theValues)
+{
+	std::ifstream aStream(theFileName.c_str());
+	if (!aStream.is_open())
+		return false;
+
+	std::string aLine;
+	bool aFirstLine = true;
+
+	while (std::getline(aStream, aLine))
+	{
+		if (aFirstLine)
+		{
+			aFirstLine = false;
+			if (aLine.length() >= 3 && (unsigned char)aLine[0] == 0xEF &&
+				(unsigned char)aLine[1] == 0xBB && (unsigned char)aLine[2] == 0xBF)
+				aLine.erase(0, 3);
+		}
+
+		aLine = Trim(aLine);
+		if (aLine.empty() || aLine[0] == '#' || aLine[0] == ';' || aLine[0] == '[')
+			continue;
+
+		size_t anEquals = aLine.find('=');
+		if (anEquals == std::string::npos)
+			continue;
+
+		std::string aKey = StringToLower(Trim(aLine.substr(0, anEquals)));
+		std::string aValue = Trim(aLine.substr(anEquals + 1));
+
+		// A comment only starts after whitespace, so paths may contain '#' or ';'.
+		for (size_t aPos = aValue.find_first_of("#;"); aPos != std::string::npos;
+			 aPos = aValue.find_first_of("#;", aPos + 1))
+		{
+			if (aPos > 0 && (aValue[aPos - 1] == ' ' || aValue[aPos - 1] == '\t'))
+			{
+				aValue = Trim(aValue.substr(0, aPos));
+				break;
+			}
+		}
+
+		if (!aKey.empty())
+			(*theValues)[aKey] = aValue;
+	}
+
+	return true;
+}
+
+// Chooses the save-data root according to savedata.ini. Saves always live in a
+// "userdata" subfolder of the returned folder, so this only decides the root.
+SexyString Sexy::ResolveSaveDataFolder(const SexyString& theCompanyName,
+									   const SexyString& theProductName,
+									   const SexyString& theCommonAppData,
+									   const SexyString& theRoamingAppData)
+{
+	IniValueMap aValues;
+	bool aHasConfig = LoadIniFile(GetExeDirectory() + _S("\\savedata.ini"), &aValues);
+
+	SexyString aMode = _S("user");
+	SexyString aStaticPath;
+
+	if (aHasConfig)
+	{
+		IniValueMap::iterator anItr = aValues.find(_S("mode"));
+		if (anItr != aValues.end() && !anItr->second.empty())
+			aMode = StringToLower(anItr->second);
+
+		anItr = aValues.find(_S("path"));
+		if (anItr != aValues.end())
+			aStaticPath = anItr->second;
+	}
+
+	SexyString aFolder;
+	SexyString aBase;			// needs the "<Company>\<Product>" suffix appended
+	bool aNeedsProductSuffix = false;
+
+	if (aMode == _S("portable"))
+	{
+		// beside the executable: a self-contained installation
+		aFolder = GetExeDirectory();
+	}
+	else if (aMode == _S("instance"))
+	{
+		// where the process was launched from: one save set per instance
+		aFolder = GetLaunchDirectory();
+	}
+	else if (aMode == _S("static") && !aStaticPath.empty())
+	{
+		// user-supplied location; a relative path resolves against the executable
+		bool anAbsolute = (aStaticPath.length() >= 2 && aStaticPath[1] == ':') ||
+						  (aStaticPath.length() >= 2 && aStaticPath[0] == '\\' && aStaticPath[1] == '\\');
+		aFolder = anAbsolute ? aStaticPath : GetExeDirectory() + _S("\\") + aStaticPath;
+	}
+	else if (aMode == _S("legacy") || aMode == _S("commonappdata") || aMode == _S("programdata"))
+	{
+		// the original behaviour: shared, machine-wide data
+		aBase = RemoveTrailingSlash(theCommonAppData);
+		aNeedsProductSuffix = true;
+	}
+	else
+	{
+		// default, and the fallback for an unusable "static" entry: per-user
+		// roaming AppData, the modern convention.
+		aBase = RemoveTrailingSlash(theRoamingAppData);
+		aNeedsProductSuffix = true;
+	}
+
+	if (aNeedsProductSuffix)
+	{
+		if (aBase.empty())
+			aBase = GetExeDirectory();
+
+		aFolder = aBase + _S("\\") + theCompanyName + _S("\\") + theProductName;
+	}
+
+	if (aFolder.empty())
+		aFolder = GetExeDirectory();
+
+	return AddTrailingSlash(aFolder, true);
 }
 
 
