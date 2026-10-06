@@ -365,7 +365,17 @@ void LawnApp::MakeWindow()
 		mFullScreenWindow = false;
 	}
 
-#define _WIDE_SCREEN
+// Widescreen canvas override.
+// NOTE: Hardcoding this forced the game to 1066x600 with a 133px horizontal offset
+// instead of the original 800x600. Because the original artwork only covers 800x600,
+// the extra 266px of canvas exposes the area outside the intended play area.
+// It also defeats the framework's own opt-in widescreen system (mWidths[]/mHeights[]
+// + mResolutionMode in SexyAppBase.cpp / DDInterface.cpp): forcing mWidth = 1066 here
+// makes DDInterface compute mWideScreenExtraWidth = 1066 - 1066 = 0, so the hardcoded
+// offset is what actually gets used instead of the generic calculation.
+// Upstream report: https://github.com/InLiothixi/stabledecompile/issues/55
+// Commented out to restore the original 800x600 rendering.
+//#define _WIDE_SCREEN
 #ifdef _ULTRA_WIDESCREEN
 	mWidth = 1280;
 	mHeight = 720;
