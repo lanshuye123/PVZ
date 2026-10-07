@@ -59,6 +59,7 @@
 #include "SexyAppFramework/D3DInterface.h"
 
 #include "Lawn/Widget/MoreSettingsDialog.h"
+#include "Lawn/Widget/DebugMenuDialog.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -619,6 +620,38 @@ bool LawnApp::UpdateAppStep(bool* updated)
 				{
 					if (!imguiWantsKeyboard)
 					{
+#ifdef _HAS_FEATURE_MENU
+						// 调试模式菜单：D 键开关。
+						// 放在这里而不是走 widget 的 KeyDown，是因为这个对话框不是模态的，
+						// 没有焦点 widget，键盘事件到不了它。
+						if (event.key.key == SDLK_D
+							&& !(event.key.mod & (SDL_KMOD_CTRL | SDL_KMOD_ALT | SDL_KMOD_GUI)))
+						{
+							ToggleDebugMenu();
+							break;
+						}
+
+						// "更多设置"打开时，翻页键在这里兜底。
+						// 对话框里的 KeyDown 只在它拿到键盘焦点时才收得到，而它并不总是有焦点；
+						// 键盘翻页是鼠标点不动时的退路，所以必须在应用层也能生效。
+						{
+							MoreSettingsDialog* aMoreSettings = (MoreSettingsDialog*)GetDialog(Dialogs::DIALOG_MORESETTINGS);
+							if (aMoreSettings != nullptr
+								&& !(event.key.mod & (SDL_KMOD_CTRL | SDL_KMOD_ALT | SDL_KMOD_GUI)))
+							{
+								if (event.key.key == SDLK_1 || event.key.key == SDLK_LEFT)
+								{
+									aMoreSettings->SelectPage(0);
+									break;
+								}
+								if (event.key.key == SDLK_2 || event.key.key == SDLK_RIGHT)
+								{
+									aMoreSettings->SelectPage(1);
+									break;
+								}
+							}
+						}
+#endif
 						mLastUserInputTick = mLastTimerTime;
 						if (mDebugKeysEnabled)
 						{
@@ -641,7 +674,6 @@ bool LawnApp::UpdateAppStep(bool* updated)
 						}
 
 						int theChar = GetKeyCodeFromCodeSDL(event.key.key);
-
 						if ((theChar < KEYCODE_ASCIIBEGIN || theChar > KEYCODE_ASCIIEND) && (theChar < KEYCODE_ASCIIBEGIN2 || theChar > KEYCODE_ASCIIEND2))
 						{
 							theChar = -1;
@@ -856,6 +888,9 @@ LawnApp::LawnApp()
 	mBigArrowCursor = LoadCursor(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDC_CURSOR1));
 	mDRM = nullptr;
 	mShowHealthBar = false;
+#ifdef _HAS_FEATURE_MENU
+	mDebugMenuDialog = nullptr;
+#endif
 	mVoiceVolume = 0.0f;
 	memset(&mFlowersPlucked, false, sizeof(mFlowersPlucked));
 	mRIPMode = false;
@@ -1448,6 +1483,11 @@ void LawnApp::DoBackToMain()
 	mSoundSystem->CancelPausedFoley();
 	WriteCurrentUserConfig();
 	KillNewOptionsDialog();
+#ifdef _HAS_FEATURE_MENU
+	// 调试菜单是独立的非模态窗口，回主菜单时必须一起收掉，
+	// 否则它会横在主界面上方挡着鼠标
+	KillDebugMenu();
+#endif
 	KillBoard();
 	ShowGameSelector();
 }
@@ -4899,3 +4939,41 @@ void LawnApp::DoMoreSettingsDialog()
 	MoreSettingsDialog* aDialog = new MoreSettingsDialog(this);
 	AddDialog(Dialogs::DIALOG_MORESETTINGS, aDialog);
 }
+
+#ifdef _HAS_FEATURE_MENU
+//0x44F200 之后新增：调试模式菜单（D 键）
+void LawnApp::ToggleDebugMenu()
+{
+	if (mDebugMenuDialog != nullptr)
+	{
+		KillDebugMenu();
+	}
+	else
+	{
+		ShowDebugMenu();
+	}
+}
+
+void LawnApp::ShowDebugMenu()
+{
+	if (mDebugMenuDialog != nullptr)
+	{
+		return;
+	}
+
+	mDebugMenuDialog = new DebugMenuDialog(this);
+	AddDialog(Dialogs::DIALOG_DEBUGMENU, mDebugMenuDialog);
+}
+
+void LawnApp::KillDebugMenu()
+{
+	if (mDebugMenuDialog == nullptr)
+	{
+		return;
+	}
+
+	// KillDialog 会 SafeDeleteWidget 掉对话框，这里必须先把野指针清掉
+	mDebugMenuDialog = nullptr;
+	KillDialog(Dialogs::DIALOG_DEBUGMENU);
+}
+#endif

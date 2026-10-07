@@ -346,6 +346,10 @@ public:
 	/*inline*/ int					PixelToGridXKeepOnBoard(int theX, int theY);
 	/*inline*/ int					PixelToGridYKeepOnBoard(int theX, int theY);
 	void							UpdateGameObjects();
+#ifdef _HAS_FEATURE_MENU
+	void							UpdateFeatureCheats();
+	void							UpdateAutoCollect();
+#endif
 	bool							MouseHitTest(int x, int y, HitResult* theHitResult);
 	void							MouseDownWithPlant(int x, int y, int theClickCount);
 	void							MouseDownWithTool(int x, int y, int theClickCount, CursorType theCursorType);

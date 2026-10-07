@@ -120,4 +120,16 @@ const int           STORESCREEN_PAGESTRING_Y = 500;
 //#define _PIERCING_CACTUS
 //#define _SPLASH_SNOWPEA
 
+// ============================================================
+// ■ Mod 功能总开关
+//
+//   _HAS_FEATURE_MENU —— 打开之后才会有 LawnApp::mFeatures 这一组运行时开关：
+//       · 调试模式菜单（游戏中按 D 键）：血量数字显示 / 无限阳光 / 无种植 CD
+//       · 游戏设置 → “游戏”页：自动拾取阳光 / 自动拾取金币
+//
+//   三个子功能都挂在这个总开关下面，注释掉它就等于整组功能不参与编译，
+//   不会留下任何运行时开销。以后要按功能拆开单独控制，再拆成独立宏即可。
+// ============================================================
+#define _HAS_FEATURE_MENU
+
 #include "ConstEnums.h" // Include the enums at the end to properly setup the entries related to the defines

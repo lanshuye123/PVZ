@@ -547,6 +547,7 @@ EXIT /B 0</Command>
     <ClCompile Include="..\Lawn\Widget\ImageScrollbar.cpp" />
     <ClCompile Include="..\Lawn\Widget\LanguageScreen.cpp" />
     <ClCompile Include="..\Lawn\Widget\MoreSettingsDialog.cpp" />
+    <ClCompile Include="..\Lawn\Widget\DebugMenuDialog.cpp" />
     <ClCompile Include="..\Lawn\Widget\QuickplayScreen.cpp" />
     <ClCompile Include="..\Lawn\Widget\MoreScreen.cpp" />
     <ClCompile Include="..\Lawn\Widget\AlmanacDialog.cpp" />
@@ -1260,6 +1261,8 @@ EXIT /B 0</Command>
     <ClInclude Include="..\Lawn\Widget\ImageScrollbar.h" />
     <ClInclude Include="..\Lawn\Widget\LanguageScreen.h" />
     <ClInclude Include="..\Lawn\Widget\MoreSettingsDialog.h" />
+    <ClInclude Include="..\Lawn\Widget\DebugMenuDialog.h" />
+    <ClInclude Include="..\Lawn\Widget\LawnFeatureLabels.h" />
     <ClInclude Include="..\Lawn\Widget\QuickplayScreen.h" />
     <ClInclude Include="..\Lawn\Widget\MoreScreen.h" />
     <ClInclude Include="..\Lawn\Widget\AlmanacDialog.h" />

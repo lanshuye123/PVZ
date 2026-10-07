@@ -20,6 +20,7 @@ A Project focused in making modding both GOTY and OG possible, adding features a
 - [x]  Added Mobile Minigames and Last Stand Content `GameConstant.h`  
 - [x]  Build with Bloom and Doom Contents `GameConstant.h` 
 - [x]  Added Quality of Life defines `GameConstant.h` 
+- [x]  Health readout as text (green `300/300` for plants, red body + armor HP for zombies), auto-collect for sun and coins, and a `D`-key debug menu — see [`_HAS_FEATURE_MENU`](docs/02-开发参考.md#has_feature_menu-打开之后多了什么)
 
 #### Planned Features
 - [x]  Particle Editor *`In progress`*

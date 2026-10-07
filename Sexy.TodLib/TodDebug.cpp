@@ -9,7 +9,6 @@
 using namespace Sexy;
 
 static char gLogFileName[MAX_PATH];
-static char gDebugDataFolder[MAX_PATH];
 
 //0x514EA0
 void TodErrorMessageBox(const char* theMessage, const char* theTitle)
@@ -136,6 +135,7 @@ void TodLogString(const char* theMsg)
 	{
 		OutputDebugString(_S("Failed to open log file\n"));
 		printf(_S("Failed to open log file\n"));
+		return;
 	}
 
 	if (fwrite(theMsg, strlen(theMsg), 1, f) != 1)
@@ -269,10 +269,12 @@ void (*gBetaSubmitFunc)() = nullptr;
 void TodAssertInitForApp()
 {
 	MkDir(GetAppDataFolder() + "userdata");
-	string aRelativeUserPath = GetAppDataFolder() + "userdata\\";
-	strcpy(gDebugDataFolder, GetFullPath(aRelativeUserPath).c_str());
-	strcpy(gLogFileName, gDebugDataFolder);
-	strcpy(gLogFileName + strlen(gLogFileName), "log.txt");
+
+	// 日志直接落在程序的工作目录下（不写死任何绝对路径）：
+	// 这样无论存档被配置到 user 还是 portable，日志都跟 exe 在一起，方便现场取。
+	// 注意：以前这里用 GetAppDataFolder() 拼绝对路径，一旦那个目录取不到或不可写，
+	// fopen 就会失败；而 TodLogString 此前没做空指针检查（见上），会直接崩在 fwrite。
+	strcpy(gLogFileName, "log.txt");
 	TOD_ASSERT(strlen(gLogFileName) < MAX_PATH);
 
 	__time64_t aclock = _time64(nullptr);

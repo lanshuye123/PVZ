@@ -358,9 +358,48 @@ void TodDrawString(Graphics* g, const SexyString& theText, int thePosX, int theP
 	theFont->DrawString(g, aPosX, thePosY, aFinalString, theColor, g->mClipRect);
 }
 
-//0x511D90
-void TodDrawImageCelScaled(Graphics* g, Image* theImageStrip, int thePosX, int thePosY, int theCelCol, int theCelRow, float theScaleX, float theScaleY)
+// ====================================================================================================
+// 血量数字的绘制
+//
+// ⚠ 关键点：Graphics::DrawString() 与 Graphics::FillRect()/DrawRect() 对平移的处理**不一致**。
+//
+//   · FillRect / DrawRect / DrawImage 都会把 g->mTransX / mTransY 加进目标坐标；
+//   · 但 Graphics::DrawString() 直接调 Font::DrawString()，**完全不理会 mTransX/mTransY**。
+//
+// 血量条是在 GameObject::BeginDraw() 已经 Translate(mX, mY) 之后的坐标系里画的
+// （见 GameObject.cpp 的 BeginDraw/EndDraw），所以血量条的 12 / HEALTH_Y 是**对象局部坐标**。
+// 若把同样的局部坐标交给 DrawString，字就会画到屏幕左上角去 —— 这正是"看不到血量数字"的原因。
+//
+// 因此这里用 g->SetFont() + g->DrawString()：Graphics::DrawString 走 Font::DrawString，
+// 但我们要的是补上平移，所以显式把 mTransX / mTransY 加进来，
+// 让文字的基准点和 FillRect 画出来的血量条处在**同一个坐标系**里。
+//
+// 顺带好处：以后要换成外挂 Unicode 字体，也只需要改这一个函数。
+// ====================================================================================================
+void TodDrawHealthText(Graphics* g, const SexyString& theText, int thePosX, int thePosY, Font* theFont, const Color& theColor)
 {
+	if (g == nullptr || theFont == nullptr || theText.empty())
+		return;
+
+	SexyString aFinalString = TodStringTranslate(theText);
+
+	// 与 FillRect 对齐：把当前平移量补回去
+	const int aDrawX = thePosX + g->mTransX;
+	const int aDrawY = thePosY + g->mTransY;
+
+	g->PushState();
+	g->SetFont(theFont);
+	g->SetColor(theColor);
+
+	// thePosY 收的是文字**底边**（含降部），Font::DrawString 收的是基线
+	const int aBaselineY = aDrawY - theFont->GetDescent();
+	g->DrawString(aFinalString, aDrawX, aBaselineY);
+
+	g->PopState();
+}
+
+//0x511D90
+void TodDrawImageCelScaled(Graphics* g, Image* theImageStrip, int thePosX, int thePosY, int theCelCol, int theCelRow, float theScaleX, float theScaleY){
 	TOD_ASSERT(theCelCol >= 0 && theCelCol < theImageStrip->mNumCols);
 	TOD_ASSERT(theCelRow >= 0 && theCelRow < theImageStrip->mNumRows);
 

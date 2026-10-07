@@ -1,9 +1,10 @@
-﻿#include "../Board.h"
+#include "../Board.h"
 #include "GameButton.h"
 #include "../Cutscene.h"
 #include "AlmanacDialog.h"
 #include "../LawnCommon.h"
 #include "../../LawnApp.h"
+#include "../../GameConstants.h"
 #include "../System/Music.h"
 #include "../../Resources.h"
 #include "NewOptionsDialog.h"
@@ -29,6 +30,11 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector) :
    /* mGameplayButton = MakeButton(NewOptionsDialog::NewOptionsDialog_VideoGraphics, this, _S("[GAMEPLAY_SETTINGS_BUTTON]"));
     mControllerButton = MakeButton(NewOptionsDialog::NewOptionsDialog_SoundSystem, this, _S("[CONTROLLER_BUTTON]"));
     mLanguageButton = MakeButton(NewOptionsDialog::NewOptionsDialog_Language, this, _S("[LANGUAGE_BUTTON]"));*/
+
+#ifdef _HAS_FEATURE_MENU
+    // 游戏设置（自动拾取阳光/金币等）入口
+    mGameplayButton = MakeButton(NewOptionsDialog::NewOptionsDialog_VideoGraphics, this, _S("More Settings"));
+#endif
 
     mBackToGameButton = MakeNewButton(
         Dialog::ID_OK, 
@@ -120,11 +126,13 @@ NewOptionsDialog::~NewOptionsDialog()
     delete mRestartButton;
     delete mBackToMainButton;
     delete mBackToGameButton;
+#ifdef _HAS_FEATURE_MENU
+    delete mGameplayButton;
+#endif
     /*delete mGameplayButton;
     delete mControllerButton;
     delete mLanguageButton;*/
 }
-
 //0x45C880
 int NewOptionsDialog::GetPreferredHeight(int theWidth)
 {
@@ -138,6 +146,9 @@ void NewOptionsDialog::AddedToManager(Sexy::WidgetManager* theWidgetManager)
     /*AddWidget(mGameplayButton);
     AddWidget(mControllerButton);
     AddWidget(mLanguageButton);*/
+#ifdef _HAS_FEATURE_MENU
+    AddWidget(mGameplayButton);
+#endif
     AddWidget(mAlmanacButton);
     AddWidget(mRestartButton);
     AddWidget(mBackToMainButton);
@@ -155,6 +166,9 @@ void NewOptionsDialog::RemovedFromManager(Sexy::WidgetManager* theWidgetManager)
     /*RemoveWidget(mGameplayButton);
     RemoveWidget(mControllerButton);
     RemoveWidget(mLanguageButton);*/
+#ifdef _HAS_FEATURE_MENU
+    RemoveWidget(mGameplayButton);
+#endif
     RemoveWidget(mAlmanacButton);
     RemoveWidget(mRestartButton);
     RemoveWidget(mBackToMainButton);
@@ -173,14 +187,9 @@ void NewOptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight)
     mSfxVolumeSlider->Resize(199, 143, 135, 40);
     mHardwareAccelerationCheckbox->Resize(283, 175, 46, 45);
     mFullscreenCheckbox->Resize(284, 206, 46, 45);
-    mAlmanacButton->Resize(107, 241, 209, 46);
-    mRestartButton->Resize(mAlmanacButton->mX, mAlmanacButton->mY + 43, 209, 46);
-    mBackToMainButton->Resize(mRestartButton->mX, mRestartButton->mY + 43, 209, 46);
-    mBackToGameButton->Resize(30, 381, mBackToGameButton->mWidth, mBackToGameButton->mHeight);
 
-    /*mGameplayButton->Resize(mAlmanacButton->mX, 116, 209, 46);
-    mControllerButton->Resize(mAlmanacButton->mX, mGameplayButton->mY + 43, 209, 46);
-    mLanguageButton->Resize(mAlmanacButton->mX, mControllerButton->mY + 43, 209, 46);*/
+    // 按钮行距（原来每行固定 +43；46 高的按钮实际只留了 -3 的重叠量）
+    const int BUTTON_STEP = 43;
 
     if (mFromGameSelector)
     {
@@ -188,16 +197,39 @@ void NewOptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight)
         mSfxVolumeSlider->mY += 10;
         mHardwareAccelerationCheckbox->mY += 15;
         mFullscreenCheckbox->mY += 20;
-
-        /*mGameplayButton->mY += 69;
-        mControllerButton->mY += 69;
-        mLanguageButton->mY += 69;
-        mBackToMainButton->Resize(mAlmanacButton->mX, mLanguageButton->mY + 43, 209, 46);*/
     }
+
+    // 主界面那套的可用行与游戏内那套不同：
+    //   · 主界面（mFromGameSelector）：勾选框被下推 20px，只铺得下 3 行按钮 → 241 / 284 / 327；
+    //   · 游戏内：铺得下 4 行 → 241 / 284 / 327 / 370。
+    //
+    // "更多设置"要压在 Credits 上面，所以主界面的按钮堆栈整体上移一行（198 起），
+    // 腾出最下面那行给"更多设置"，它就正好在 Credits 正上方。
+    const int aStackTop = mFromGameSelector ? 198 : 241;
+
+    mAlmanacButton->Resize(107, aStackTop, 209, 46);
+    mRestartButton->Resize(mAlmanacButton->mX, mAlmanacButton->mY + BUTTON_STEP, 209, 46);
+    mBackToMainButton->Resize(mRestartButton->mX, mRestartButton->mY + BUTTON_STEP, 209, 46);
+
+#ifdef _HAS_FEATURE_MENU
+    // 放在最后一行：主界面时它就在 Credits 正下方，游戏内时在 Main Menu 下面
+    mGameplayButton->Resize(mAlmanacButton->mX, mBackToMainButton->mY + BUTTON_STEP, 209, 46);
+    // 多了一行按钮，底部 OK 也跟着下移一点，别贴上去
+    mBackToGameButton->Resize(30, 391, mBackToGameButton->mWidth, mBackToGameButton->mHeight);
+#else
+    mBackToGameButton->Resize(30, 381, mBackToGameButton->mWidth, mBackToGameButton->mHeight);
+#endif
 
     if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN || mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM || mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ICE)
     {
-        mAlmanacButton->mY += 43;
+        mAlmanacButton->mY += BUTTON_STEP;
+#ifdef _HAS_FEATURE_MENU
+        // 禅境花园 / 智慧树 / 冰关会隐藏图鉴按钮并让按钮堆栈整体下移一行，
+        // 这里同步下移，避免和上面一行叠在一起
+        mRestartButton->mY += BUTTON_STEP;
+        mBackToMainButton->mY += BUTTON_STEP;
+        mGameplayButton->mY += BUTTON_STEP;
+#endif
     }
 }
 
@@ -439,5 +471,14 @@ void NewOptionsDialog::ButtonDepress(int theId)
         mApp->ShowLanagugeScreen();
         break;
     }
+
+#ifdef _HAS_FEATURE_MENU
+    case NewOptionsDialog::NewOptionsDialog_VideoGraphics:
+    {
+        // 打开“更多设置”（第 2 页是游戏设置：自动拾取阳光 / 金币）
+        mApp->DoMoreSettingsDialog();
+        break;
+    }
+#endif
     }
 }

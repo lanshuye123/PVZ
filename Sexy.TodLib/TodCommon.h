@@ -187,6 +187,9 @@ void					SexyMatrix3Multiply(SexyMatrix3& m, const SexyMatrix3& l, const SexyMat
 bool					TodIsPointInPolygon(const SexyVector2* thePolygonPoint, int theNumberPolygonPoints, const SexyVector2& theCheckPoint);
 
 void					TodDrawString(Graphics* g, const SexyString& theText, int thePosX, int thePosY, Font* theFont, const Color& theColor, DrawStringJustification theJustification);
+// 血量数字。注意：坐标是**对象局部坐标**，函数内部会补上 Graphics 的平移量，
+// 以便和 FillRect 画出来的血量条对齐（Graphics::DrawString 本身不理会 mTransX/mTransY）。
+void					TodDrawHealthText(Graphics* g, const SexyString& theText, int thePosX, int thePosY, Font* theFont, const Color& theColor);
 void					TodDrawStringMatrix(Graphics* g, const Font* theFont, const SexyMatrix3& theMatrix, const SexyString& theString, const Color& theColor);
 void					TodDrawImageScaledF(Graphics* g, Image* theImage, float thePosX, float thePosY, float theScaleX, float theScaleY);
 void					TodDrawImageCenterScaledF(Graphics* g, Image* theImage, float thePosX, float thePosY, float theScaleX, float theScaleY);

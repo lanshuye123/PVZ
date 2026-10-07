@@ -43,6 +43,7 @@ class ChallengeScreen;
 class StoreScreen;
 class AlmanacDialog;
 class TypingCheck;
+class DebugMenuDialog;
 
 namespace Sexy
 {
@@ -67,6 +68,32 @@ public:
 	LevelStats() { Reset(); }
 	inline void						Reset() { mUnusedLawnMowers = 0; }
 };
+
+#ifdef _HAS_FEATURE_MENU
+// ====================================================================================================
+// ★ Mod 运行时功能开关
+//
+// 分两组，互不干扰：
+//   · mSettings —— 玩家设置（游戏设置界面的“游戏”页），改一次一直有效；
+//   · mCheats   —— 调试作弊（按 D 打开的调试模式菜单），允许一局一开。
+//
+// 之所以不共用同一个 bool：设置里关掉“无限阳光”之后，调试菜单里临时开的
+// 无限阳光不应该被一起关掉，反之亦然。两处各自独立，语义才清楚。
+//
+// 以后要做 i18n 时，界面文字都在 LawnFeatureLabels.h 里集中替换。
+// ====================================================================================================
+struct LawnFeatureSettings
+{
+	// 玩家设置
+	bool							mAutoCollectSun = false;
+	bool							mAutoCollectCoins = false;
+
+	// 调试作弊
+	bool							mShowHealthText = false;
+	bool							mInfiniteSun = false;
+	bool							mNoPlantCooldown = false;
+};
+#endif
 
 class LawnApp : public SexyApp
 {
@@ -153,6 +180,10 @@ public:
 	bool							mDebugTrialLocked;								//+0x8C4
 	bool							mMuteSoundsForCutscene;							//+0x8C5
 	bool							mShowHealthBar;
+#ifdef _HAS_FEATURE_MENU
+	LawnFeatureSettings				mFeatures;
+	DebugMenuDialog*				mDebugMenuDialog;
+#endif
 	bool							mFlowersPlucked[3];
 	PaStream*						mPortAudioStream;
 	float							mVoiceVolume;
@@ -371,7 +402,11 @@ public:
 
 	void							DoConfirmRIPMode();
 	void							DoMoreSettingsDialog();
-	void							KillMoreSettingsDialog();
+#ifdef _HAS_FEATURE_MENU
+	void							ToggleDebugMenu();
+	void							ShowDebugMenu();
+	void							KillDebugMenu();
+#endif
 	void							MakeWindow();
 	bool							DrawDirtyStuff();
 	void							Redraw(Rect* theClipRect);

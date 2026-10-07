@@ -306,6 +306,7 @@ enum Dialogs
     DIALOG_ZOMBATARTOS,
     DIALOG_CONFIRM_RIP_MODE,
     DIALOG_MORESETTINGS,
+    DIALOG_DEBUGMENU,                           // 调试模式菜单（游戏中按 D 键开关）
     DIALOG_UNLOCK,
     DIALOG_ALREADY_UNLOCK,
     NUM_DIALOGS

@@ -26,6 +26,8 @@ private:
 		MoreSettingsDialog_AutoPause,
 		MoreSettingsDialog_OptimizedGameplay,
 		MoreSettingsDialog_NoToolTip,
+		MoreSettingsDialog_AutoCollectSun,
+		MoreSettingsDialog_AutoCollectCoins,
 	}; 
 
 	enum MoreSettingsPages {
@@ -44,8 +46,14 @@ public:
 	Checkbox*			mFPSToggle;
 	Checkbox*			mAutoPause;
 	Checkbox*			mShowToolTip;
+	// PP2（游戏设置）
+	Checkbox*			mAutoCollectSun;
+	Checkbox*			mAutoCollectCoins;
 
 public:
+	// 页面数量（应用层键盘兜底要用，所以放到 public）
+	enum { PAGE_COUNT = 2 };
+
 	MoreSettingsDialog(LawnApp* theApp);
 	~MoreSettingsDialog();
 	void				AddedToManager(Sexy::WidgetManager* theWidgetManager);
@@ -54,7 +62,11 @@ public:
 	void				Draw(Sexy::Graphics* g);
 	void				CheckboxChecked(int theId, bool checked);
 	void				ButtonDepress(int theId);
+	virtual void		KeyDown(Sexy::KeyCode theKey);
 	void				ChangePage(MoreSettingsPages thePage);
+	// 按序号选页（0 = 第 1 页）。给应用层键盘兜底用，避免外部依赖私有枚举。
+	void				SelectPage(int thePageIndex);
 	void				Update();
+	void				SyncSettingsFromApp();
 };
 #endif

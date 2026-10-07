@@ -5912,6 +5912,84 @@ void Board::UpdateGameObjects()
 	}
 }
 
+#ifdef _HAS_FEATURE_MENU
+// ====================================================================================================
+// ★ 调试作弊：无限阳光 / 无种植 CD
+//
+// 思路是“每帧把状态拉回满”，而不是去改 GetCurrentPlantCost / TakeSunMoney 的判定：
+//   · 无限阳光：mSunMoney 顶到 AddSunMoney 原本的上限 9990，松手就自然花光，不留副作用；
+//   · 无种植 CD：把每个卡槽的刷新计数清零并直接激活（复用 SeedBank::RefreshAllPackets 的做法），
+//     松手之后卡槽会按原本的 mRefreshTime 重新计时，不会永久卡成“已就绪”。
+// ====================================================================================================
+void Board::UpdateFeatureCheats()
+{
+	if (mApp->mFeatures.mInfiniteSun)
+	{
+		mSunMoney = 9990;
+	}
+
+	if (mApp->mFeatures.mNoPlantCooldown && !HasConveyorBeltSeedBank())
+	{
+		for (int i = 0; i < mSeedBank->mNumPackets; i++)
+		{
+			SeedPacket* aSeedPacket = &mSeedBank->mSeedPackets[i];
+			if (aSeedPacket->mPacketType == SeedType::SEED_NONE)
+			{
+				continue;
+			}
+
+			if (aSeedPacket->mRefreshing)
+			{
+				aSeedPacket->mRefreshCounter = 0;
+				aSeedPacket->mRefreshing = false;
+			}
+
+			aSeedPacket->mActive = true;
+		}
+	}
+}
+
+// ====================================================================================================
+// ★ 自动拾取阳光 / 自动拾取金币
+//
+// 走的是和 Coin::MouseDown 完全一样的入口：PlayCollectSound() + Collect()，
+// 所以阳光进账、金币进账、成就、音效、粒子都跟手点一模一样。
+//
+// 收集时机特意选在“任何位置”而不是“落地之后”：
+//   · 阳光从天上掉下来时就在下落路径上被收走，不会出现“刚掉下来就凭空消失”的观感；
+//   · 砖块/僵尸掉的金币同理。
+// 唯一排除的是 CONE_USABLE_SEED_PACKET 这类需要玩家亲自点选落点的币（按类型判断，天然排除）。
+// ====================================================================================================
+void Board::UpdateAutoCollect()
+{
+	if (!mApp->mFeatures.mAutoCollectSun && !mApp->mFeatures.mAutoCollectCoins)
+	{
+		return;
+	}
+
+	Coin* aCoin = nullptr;
+	while (IterateCoins(aCoin))
+	{
+		if (aCoin->mDead || aCoin->mIsBeingCollected)
+		{
+			continue;
+		}
+
+		const bool aWantThisCoin =
+			(mApp->mFeatures.mAutoCollectSun && aCoin->IsSun()) ||
+			(mApp->mFeatures.mAutoCollectCoins && aCoin->IsMoney());
+
+		if (!aWantThisCoin)
+		{
+			continue;
+		}
+
+		aCoin->PlayCollectSound();
+		aCoin->Collect();
+	}
+}
+#endif
+
 //0x413220
 void Board::StopAllZombieSounds()
 {
@@ -6647,6 +6725,17 @@ void Board::UpdateGame()
 
 	if (mApp->mGameScene != GameScenes::SCENE_PLAYING && !mCutScene->ShouldRunUpsellBoard())
 		return;
+
+#ifdef _HAS_FEATURE_MENU
+	// 调试作弊（无限阳光 / 无种植 CD）每帧重新生效，玩家一关开关立刻恢复原状
+	UpdateFeatureCheats();
+
+	// 自动拾取（阳光 / 金币）只在真正对局里跑
+	if (mApp->mGameScene == GameScenes::SCENE_PLAYING)
+	{
+		UpdateAutoCollect();
+	}
+#endif
 
 	mMainCounter++;
 	UpdateSunSpawning();
@@ -9799,7 +9888,12 @@ void Board::KeyDown(KeyCode theKey)
 
 #ifdef _HAS_HEALTHBAR_TOGGLE
 	if (theKey == KeyCode::KEYCODE_TAB) {
+#ifdef _HAS_FEATURE_MENU
+		// 有了调试菜单之后，血量数字显示改由菜单里的开关控制
+		mApp->mFeatures.mShowHealthText = !mApp->mFeatures.mShowHealthText;
+#else
 		mApp->mShowHealthBar = !mApp->mShowHealthBar;
+#endif
 	}
 #endif
 

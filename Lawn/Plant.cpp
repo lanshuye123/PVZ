@@ -5184,19 +5184,37 @@ void Plant::Draw(Graphics* g)
         }
     }
 
-    if (IsInPlay() && !mSquished && mApp->mShowHealthBar && !mApp->IsWallnutBowlingLevel() && mPlantHealth != mPlantMaxHealth /* &&
-        (mSeedType == SeedType::SEED_WALLNUT || mSeedType == SeedType::SEED_TALLNUT || mSeedType == SeedType::SEED_PUMPKINSHELL || 
-            mSeedType == SeedType::SEED_GARLIC)*/) {
+#ifdef _HAS_FEATURE_MENU
+    // 打开血量显示后**始终**显示数字（不再只在受伤时显示）
+    const bool aShowHealthText = mApp->mFeatures.mShowHealthText;
+#else
+    const bool aShowHealthText = false;
+#endif
+
+    if (IsInPlay() && !mSquished && !mApp->IsWallnutBowlingLevel() &&
+        (aShowHealthText || (mApp->mShowHealthBar && mPlantHealth != mPlantMaxHealth)))
+    {
         const int HEALTH_Y = PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow) + 10;
-        g->SetColor(Color(75, 75, 255));
-        g->FillRect(12, HEALTH_Y, 50, 5);
 
-        g->SetColor(Color(75, 255, 255));
-        float HPpercent = (mPlantHealth) / (float)(mPlantMaxHealth);
-        g->FillRect(12, HEALTH_Y, (int)(50 * HPpercent), 5);
+        if (aShowHealthText)
+        {
+            // 绿色数字：当前血量 / 最大血量。
+            // (12, HEALTH_Y) 与下面血量条用的是同一套对象局部坐标
+            TodDrawHealthText(g, StrFormat(_S("%d/%d"), mPlantHealth, mPlantMaxHealth),
+                12, HEALTH_Y - 2, mBoard->mDebugFont, Color(0, 255, 0));
+        }
+        else
+        {
+            g->SetColor(Color(75, 75, 255));
+            g->FillRect(12, HEALTH_Y, 50, 5);
 
-        g->SetColor(Color::Black);
-        g->DrawRect(12, HEALTH_Y, 50, 5);
+            g->SetColor(Color(75, 255, 255));
+            float HPpercent = (mPlantHealth) / (float)(mPlantMaxHealth);
+            g->FillRect(12, HEALTH_Y, (int)(50 * HPpercent), 5);
+
+            g->SetColor(Color::Black);
+            g->DrawRect(12, HEALTH_Y, 50, 5);
+        }
     }
 }
 

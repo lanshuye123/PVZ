@@ -7339,9 +7339,19 @@ void Zombie::Draw(Graphics* g)
 
     g->ClearClipRect();
 
-    if (mZombieType != ZombieType::ZOMBIE_BOSS && IsOnBoard() && mApp->mShowHealthBar && mHasHead && !IsDeadOrDying() && !mApp->IsWhackAZombieLevel() &&
-        (EffectedByDamage(1U) || EffectedByDamage(2U) || EffectedByDamage(4U) || EffectedByDamage(8U) || EffectedByDamage(129U) && mMindControlled)
-        ) {
+    if (mZombieType != ZombieType::ZOMBIE_BOSS && IsOnBoard() && mHasHead && !IsDeadOrDying() && !mApp->IsWhackAZombieLevel())
+    {
+#ifdef _HAS_FEATURE_MENU
+        // 打开血量显示后**始终**显示数字；关掉时才回落到原版血条（只在会受伤时显示）
+        const bool aShowHealthText = mApp->mFeatures.mShowHealthText;
+#else
+        const bool aShowHealthText = false;
+#endif
+
+        if (aShowHealthText ||
+            (mApp->mShowHealthBar &&
+             (EffectedByDamage(1U) || EffectedByDamage(2U) || EffectedByDamage(4U) || EffectedByDamage(8U) || EffectedByDamage(129U) && mMindControlled)))
+        {
 
         float aScale = mScaleZombie;
         //if (mZombieType == ZombieType::ZOMBIE_DANCER || mZombieType == ZombieType::ZOMBIE_BACKUP_DANCER)    aScale *= 1.25f;
@@ -7368,6 +7378,49 @@ void Zombie::Draw(Graphics* g)
                 HEALTH_POSY += 20;
         }
 
+        if (aShowHealthText)
+        {
+            // 本体血量：红色数字；有防具时再单独一行显示防具血量。
+            // “有防具”的判定与原版血条一致：头盔/报纸/铁门等算 mHelmHealth，
+            // 飞行类（气球）算 mFlyingHealth。
+            //
+            // 坐标说明：(HEALTH_POSX, HEALTH_POSY) 是血量条的左上角，同样处在
+            // GameObject::BeginDraw() 平移过的对象局部坐标系里；
+            // TodDrawHealthText 内部会把平移量补回去，所以这里直接给局部坐标即可。
+            const Color aHealthColor(255, 40, 40);
+            const int aHealthTextX = HEALTH_POSX;
+
+            // 本体那行画在血量条正上方（条高 5，留 2px 间隙）
+            const int aBodyTextY = HEALTH_POSY - 7;
+
+            if (mHelmMaxHealth > 0 || mHelmHealth > 0)
+            {
+                // 防具（头盔 / 报纸 / 铁门 …）：防具那行在上，本体那行在下
+                const int aArmorTextY = aBodyTextY - 14;
+
+                TodDrawHealthText(g, StrFormat(_S("%d/%d"), mHelmHealth, mHelmMaxHealth),
+                    aHealthTextX, aArmorTextY, mBoard->mDebugFont, aHealthColor);
+
+                TodDrawHealthText(g, StrFormat(_S("%d/%d"), mBodyHealth, mBodyMaxHealth),
+                    aHealthTextX, aBodyTextY, mBoard->mDebugFont, aHealthColor);
+            }
+            else
+            {
+                TodDrawHealthText(g, StrFormat(_S("%d/%d"), mBodyHealth, mBodyMaxHealth),
+                    aHealthTextX, aBodyTextY, mBoard->mDebugFont, aHealthColor);
+            }
+
+            // 气球等飞行防具：再单独一行
+            if (mFlyingMaxHealth > 0 && IsFlying())
+            {
+                const int aShieldTextY = aBodyTextY - 14;
+
+                TodDrawHealthText(g, StrFormat(_S("%d/%d"), mFlyingHealth, mFlyingMaxHealth),
+                    aHealthTextX, aShieldTextY, mBoard->mDebugFont, aHealthColor);
+            }
+        }
+        else
+        {
         g->SetColor(Color(255, 75, 75));
         g->FillRect(HEALTH_POSX, HEALTH_POSY, 50, 5);
 
@@ -7394,6 +7447,8 @@ void Zombie::Draw(Graphics* g)
 
             g->SetColor(Color::Black);
             g->DrawRect(HEALTH_POSX, HEALTH_POSY - 5, 50, 5);
+        }
+        }
         }
     }
 

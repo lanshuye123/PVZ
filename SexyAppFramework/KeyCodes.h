@@ -101,6 +101,10 @@ namespace Sexy
 		KEYCODE_ASCIIEND2 = 0xE0
 	};
 
+	// 字母键直接就是大写 ASCII 码（见 KeyCodeSDLToKeyCode）。
+	// 补一个具名常量，省得在代码里散落 (KeyCode)'D' 这种魔法值。
+	constexpr KeyCode KEYCODE_D = (KeyCode)'D';
+
 	enum KeyCodeSDL
 	{
 		KEYCODESDL_UNKNOWN,
