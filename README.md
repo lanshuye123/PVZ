@@ -3,6 +3,8 @@
 
 A Project focused in making modding both GOTY and OG possible, adding features and contents from different platforms of the Franchise, and bug fixes.
 
+> **中文文档：[`docs/`](docs/README.md)** — 项目概述、开发参考、构建指南、存档配置、故障排查。
+
 #### Features
 - [x]  Compile on x64 and x86 Platform
 - [x]  Build with OG or GOTY version
